@@ -1,0 +1,69 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+
+plugins {
+    id("org.jetbrains.kotlin.multiplatform") version "1.3.61"
+}
+
+repositories {
+    mavenCentral()
+}
+
+kotlin {
+    jvm()
+    mingwX64("mingw") {
+        binaries {
+            executable {
+                entryPoint = 'se.lovef.mingw.main'
+            }
+        }
+    }
+    macosX64("macos") {
+        binaries {
+            executable {
+                entryPoint = 'se.lovef.macos.main'
+            }
+        }
+    }
+
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation(kotlin("stdlib-common"))
+            }
+        }
+        jvmMain {
+            dependencies {
+                implementation(kotlin("stdlib"))
+            }
+        }
+        jvmTest {
+            dependencies {
+                implementation("se.lovef:kotlin-assert-utils:0.10.1")
+            }
+        }
+    }
+}
+
+tasks.withType(Test) {
+    testLogging {
+        exceptionFormat = TestExceptionFormat.FULL
+    }
+}
+
+task mingw(dependsOn: mingwMainBinaries) {
+    doLast {
+        copy {
+            from file("build/bin/mingw/releaseExecutable/app.exe")
+            into rootProject.file("build")
+        }
+    }
+}
+
+task macos(dependsOn: macosMainBinaries) {
+    doLast {
+        copy {
+            from file("build/bin/macos/releaseExecutable/app.kexe")
+            into rootProject.file("build")
+        }
+    }
+}
